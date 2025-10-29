@@ -17,7 +17,6 @@ export default function AddCategoriaModal({
   onCategoriaAdded,
 }: AddCategoriaModalProps) {
   const [nome, setNome] = useState("");
-  const [tipo, setTipo] = useState("despesa"); // valor padrão
   const [errors, setErrors] = useState<FormErrors>({});
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -27,7 +26,6 @@ export default function AddCategoriaModal({
     const formData = new FormData(e.currentTarget);
     const data = {
       nome: formData.get("nome"),
-      tipo: formData.get("tipo"),
     };
 
     const validation = CategoriaSchema.safeParse(data);
@@ -46,7 +44,7 @@ export default function AddCategoriaModal({
       const res = await fetch("/api/auth/categorias", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome, tipo }),
+        body: JSON.stringify({ nome }),
       });
 
       if (res.ok) {
@@ -66,7 +64,6 @@ export default function AddCategoriaModal({
     if (!isOpen) {
       setErrors({});
       setNome("");
-      setTipo("despesa");
     }
   }, [isOpen]);
 
@@ -112,33 +109,6 @@ export default function AddCategoriaModal({
             />
             {errors.nome && (
               <p className="text-[#FF5252] text-xs mt-1">{errors.nome}</p>
-            )}
-          </div>
-
-          <div className="mb-4">
-            <label
-              className="block text-sm font-medium mb-1 text-[#E0E0E0]"
-              htmlFor="tipo"
-            >
-              Tipo
-            </label>
-            <select
-              name="tipo"
-              id="tipo"
-              value={tipo}
-              onChange={(e) => setTipo(e.target.value)}
-              className={`w-full px-4 py-2 bg-[#0D1117] text-[#E0E0E0] rounded-xl outline-none 
-              ${
-                errors.tipo
-                  ? "border-2 border-[#FF5252]"
-                  : "focus:ring-2 focus:ring-[#2196F3]"
-              }`}
-            >
-              <option value="despesa">Despesa</option>
-              <option value="receita">Receita</option>
-            </select>
-            {errors.tipo && (
-              <p className="text-[#FF5252] text-xs mt-1">{errors.tipo}</p>
             )}
           </div>
 

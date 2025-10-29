@@ -64,7 +64,7 @@ export async function POST(request: Request) {
 
     // Envia o e-mail com o link
     const { error } = await resend.emails.send({
-      from: "More Money <onboarding@resend.dev>",
+      from: "Vipi Matrizes <onboarding@resend.dev>",
       to: [email],
       subject: "Recuperação de Senha",
       html: `

@@ -21,7 +21,7 @@ export async function GET() {
     }
 
     const result = await query(
-      `SELECT id, nome, tipo, usuario_id, "criado_em"
+      `SELECT id, nome, usuario_id, "criado_em"
        FROM "Categorias"
        WHERE usuario_id = $1
        ORDER BY id ASC`,
@@ -54,27 +54,20 @@ export async function POST(req: Request) {
       );
     }
 
-    const { nome, tipo } = await req.json();
+    const { nome } = await req.json();
 
-    if (!nome || !tipo) {
+    if (!nome) {
       return NextResponse.json(
-        { error: "Campos 'nome' e 'tipo' são obrigatórios." },
-        { status: 400 }
-      );
-    }
-
-    if (!["receita", "despesa"].includes(tipo)) {
-      return NextResponse.json(
-        { error: "O campo 'tipo' deve ser 'receita' ou 'despesa'." },
+        { error: "Campo 'nome' é obrigatório." },
         { status: 400 }
       );
     }
 
     const result = await query(
-      `INSERT INTO "Categorias" (nome, tipo, usuario_id, "criado_em", "atualizado_em")
-       VALUES ($1, $2, $3, NOW(), NOW())
-       RETURNING id, nome, tipo, usuario_id, "criado_em"`,
-      [nome, tipo || null, usuarioId]
+      `INSERT INTO "Categorias" (nome, usuario_id, "criado_em", "atualizado_em")
+       VALUES ($1, $2, NOW(), NOW())
+       RETURNING id, nome, usuario_id, "criado_em"`,
+      [nome || null, usuarioId]
     );
 
     return NextResponse.json(result[0], { status: 201 });

@@ -8,7 +8,6 @@ import { Edit, Plus, Trash2 } from "lucide-react";
 interface Categoria {
   id: number;
   nome: string;
-  tipo: string;
   criado_em: string;
 }
 
@@ -106,7 +105,6 @@ export default function CategoriaList() {
           <thead>
             <tr className="border-b border-gray-700 text-[#E0E0E0]">
               <th className="px-3 py-2">Nome</th>
-              <th className="px-3 py-2">Tipo</th>
               <th className="px-3 py-2 text-center">Ações</th>
             </tr>
           </thead>
@@ -117,7 +115,6 @@ export default function CategoriaList() {
                 className="border-b border-gray-800 text-[#9E9E9E] hover:bg-[#161B22] transition"
               >
                 <td className="px-3 py-2">{c.nome}</td>
-                <td className="px-3 py-2 capitalize">{c.tipo}</td>
                 <td className="px-3 py-2 text-center">
                   <button
                     onClick={() => editarCategoria(c.id)}

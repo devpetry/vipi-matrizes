@@ -44,46 +44,42 @@ export default function SidebarToggle() {
           </h3>
 
           <ul className="space-y-1">
-            <li>
-              <a
-                href="/dashboard"
-                className="block p-2 rounded-lg text-[#E0E0E0] hover:text-[#64B5F6] hover:bg-[#0D1117] flex items-center gap-1"
-                onClick={toggleSidebar}
-              >
-                <LayoutDashboard size={16} />
-                Dashboard
-              </a>
-            </li>
-            <li>
-              <a
-                href="/lista-usuarios"
-                className="block p-2 rounded-lg text-[#E0E0E0] hover:text-[#64B5F6] hover:bg-[#0D1117] flex items-center gap-1"
-                onClick={toggleSidebar}
-              >
-                <Users size={16} />
-                Usuários
-              </a>
-            </li>
-            <li>
-              <a
-                href="/lista-categorias"
-                className="block p-2 rounded-lg text-[#E0E0E0] hover:text-[#64B5F6] hover:bg-[#0D1117] flex items-center gap-1"
-                onClick={toggleSidebar}
-              >
-                <Tag size={16} />
-                Categorias
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="block p-2 rounded-lg text-[#9E9E9E] hover:text-[#E0E0E0] hover:bg-[#0D1117] flex items-center gap-1"
-                onClick={toggleSidebar}
-              >
-                <Settings size={16} />
-                Configurações
-              </a>
-            </li>
+            {session ? (
+              <li>
+                <a
+                  href="/dashboard"
+                  className="block p-2 rounded-lg text-[#E0E0E0] hover:text-[#64B5F6] hover:bg-[#0D1117] flex items-center gap-1"
+                  onClick={toggleSidebar}
+                >
+                  <LayoutDashboard size={16} />
+                  Dashboard
+                </a>
+              </li>
+            ) : null}
+            {session ? (
+              <li>
+                <a
+                  href="/lista-usuarios"
+                  className="block p-2 rounded-lg text-[#E0E0E0] hover:text-[#64B5F6] hover:bg-[#0D1117] flex items-center gap-1"
+                  onClick={toggleSidebar}
+                >
+                  <Users size={16} />
+                  Usuários
+                </a>
+              </li>
+            ) : null}
+            {session ? (
+              <li>
+                <a
+                  href="/lista-categorias"
+                  className="block p-2 rounded-lg text-[#E0E0E0] hover:text-[#64B5F6] hover:bg-[#0D1117] flex items-center gap-1"
+                  onClick={toggleSidebar}
+                >
+                  <Tag size={16} />
+                  Categorias
+                </a>
+              </li>
+            ) : null}
             {session ? (
               <li>
                 <a

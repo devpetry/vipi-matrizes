@@ -12,7 +12,7 @@ export async function GET(
     const { id } = await context.params;
 
     const rows = await query(
-      `SELECT id, nome, tipo, usuario_id, "criado_em", "atualizado_em"
+      `SELECT id, nome, usuario_id, "criado_em", "atualizado_em"
        FROM "Categorias"
        WHERE id = $1`,
       [id]
@@ -61,18 +61,11 @@ export async function PUT(
       );
     }
 
-    const { nome, tipo } = await req.json();
+    const { nome } = await req.json();
 
-    if (!nome || !tipo) {
+    if (!nome) {
       return NextResponse.json(
-        { error: "Campos 'nome' e 'tipo' são obrigatórios." },
-        { status: 400 }
-      );
-    }
-
-    if (!["receita", "despesa"].includes(tipo)) {
-      return NextResponse.json(
-        { error: "O campo 'tipo' deve ser 'receita' ou 'despesa'." },
+        { error: "Campo 'nome' é obrigatório." },
         { status: 400 }
       );
     }
@@ -81,12 +74,11 @@ export async function PUT(
       `UPDATE "Categorias"
        SET 
          nome = $1,
-         tipo = $2,
-         usuario_id = $3,
+         usuario_id = $2,
          "atualizado_em" = NOW()
        WHERE id = $4
-       RETURNING id, nome, tipo, usuario_id, "criado_em", "atualizado_em"`,
-      [nome, tipo || null, usuarioId, categoriaId]
+       RETURNING id, nome, usuario_id, "criado_em", "atualizado_em"`,
+      [nome || null, usuarioId, categoriaId]
     );
 
     if (rows.length === 0) {

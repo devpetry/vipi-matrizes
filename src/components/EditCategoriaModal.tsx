@@ -19,7 +19,6 @@ export default function EditCategoriaModal({
   categoriaId,
 }: EditCategoriaModalProps) {
   const [nome, setNome] = useState("");
-  const [tipo, setTipo] = useState<"receita" | "despesa" | "">("");
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -33,7 +32,6 @@ export default function EditCategoriaModal({
           if (res.ok) {
             const data = await res.json();
             setNome(data.nome || "");
-            setTipo(data.tipo || "");
           } else {
             console.error("Erro ao carregar categoria:", res.statusText);
             alert("Erro ao carregar informações da categoria.");
@@ -60,7 +58,6 @@ export default function EditCategoriaModal({
     const formData = new FormData(e.currentTarget);
     const data = {
       nome: formData.get("nome"),
-      tipo: formData.get("tipo"),
     };
 
     const validation = CategoriaSchema.safeParse(data);
@@ -82,7 +79,7 @@ export default function EditCategoriaModal({
       const res = await fetch(`/api/auth/categorias/${categoriaId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome, tipo }),
+        body: JSON.stringify({ nome }),
       });
 
       if (res.ok) {
@@ -149,37 +146,6 @@ export default function EditCategoriaModal({
                 />
                 {errors.nome && (
                   <p className="text-[#FF5252] text-xs mt-1">{errors.nome}</p>
-                )}
-              </div>
-
-              {/* Tipo */}
-              <div className="mb-4">
-                <label
-                  className="block text-sm font-medium mb-1 text-[#E0E0E0]"
-                  htmlFor="tipo"
-                >
-                  Tipo
-                </label>
-                <select
-                  id="tipo"
-                  name="tipo"
-                  value={tipo}
-                  onChange={(e) =>
-                    setTipo(e.target.value as "receita" | "despesa" | "")
-                  }
-                  className={`w-full px-4 py-2 bg-[#0D1117] text-[#E0E0E0] rounded-xl outline-none
-                  ${
-                    errors.tipo
-                      ? "border-2 border-[#FF5252]"
-                      : "focus:ring-2 focus:ring-[#2196F3]"
-                  }`}
-                >
-                  <option value="">Selecione...</option>
-                  <option value="receita">Receita</option>
-                  <option value="despesa">Despesa</option>
-                </select>
-                {errors.tipo && (
-                  <p className="text-[#FF5252] text-xs mt-1">{errors.tipo}</p>
                 )}
               </div>
 
