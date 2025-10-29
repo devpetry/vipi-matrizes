@@ -1,74 +1,71 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import AddUserModal from "./AddUserModal";
-import EditUserModal from "./EditUserModal";
+import AddItemModal from "./AddItemModal";
+import EditItemModal from "./EditItemModal";
 import { Edit, Plus, Trash2 } from "lucide-react";
 
-interface Usuario {
+interface EstoqueItem {
   id: number;
-  nome: string;
-  email: string;
-  tipo_usuario: string;
-  criado_em: string;
+  descricao: string;
+  quantidade: number;
+  valor: number;
 }
 
-export default function ListUsers() {
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+export default function ListItens() {
+  const [itens, setItens] = useState<EstoqueItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [usuarioSelecionado, setUsuarioSelecionado] = useState<number | null>(
-    null
-  );
+  const [itemSelecionado, setItemSelecionado] = useState<number | null>(null);
 
-  async function carregarUsuarios() {
+  async function carregarItens() {
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/usuarios");
+      const res = await fetch("/api/auth/itens");
       const text = await res.text();
       const data = JSON.parse(text);
-      setUsuarios(data);
+      setItens(data);
     } catch (e) {
-      console.error("Erro ao carregar usuários:", e);
-      alert("Falha ao carregar lista de usuários.");
+      console.error("Erro ao carregar itens:", e);
+      alert("Falha ao carregar lista de itens.");
     }
     setLoading(false);
   }
 
-  async function editarUsuario(id: number) {
-    setUsuarioSelecionado(id);
+  async function editarItem(id: number) {
+    setItemSelecionado(id);
     setIsEditModalOpen(true);
   }
 
-  async function deletarUsuario(id: number) {
-    if (!confirm("Tem certeza que deseja excluir este usuário?")) return;
+  async function deletarItem(id: number) {
+    if (!confirm("Tem certeza que deseja excluir este item?")) return;
 
     try {
-      const res = await fetch(`/api/auth/usuarios/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/auth/itens/${id}`, { method: "DELETE" });
 
       if (!res.ok) {
-        console.error("Falha ao deletar usuário. Status:", res.status);
-        alert("Não foi possível remover o usuário.");
+        console.error("Falha ao deletar item. Status:", res.status);
+        alert("Não foi possível remover o item.");
       } else {
-        alert("Usuário removido com sucesso!");
+        alert("Item removido com sucesso!");
       }
 
-      carregarUsuarios();
+      carregarItens();
     } catch (error) {
       console.error("Erro na requisição DELETE:", error);
-      alert("Erro de conexão ao tentar excluir o usuário.");
+      alert("Erro de conexão ao tentar excluir o item.");
     }
   }
   useEffect(() => {
-    carregarUsuarios();
+    carregarItens();
   }, []);
 
   if (loading)
     return (
       <p className="flex justify-center text-center py-8 text-[#E0E0E0]">
-        Carregando usuários...
+        Carregando itens...
       </p>
     );
 
@@ -83,38 +80,38 @@ export default function ListUsers() {
           Adicionar
         </button>
 
-        {/* Tabela de usuários */}
+        {/* Tabela de itens */}
         <table className="w-full text-center border-collapse mt-6">
           <thead>
             <tr className="border-b border-gray-700 text-[#E0E0E0]">
               <th className="px-3 py-2">ID</th>
-              <th className="px-3 py-2">Nome</th>
-              <th className="px-3 py-2">E-mail</th>
-              <th className="px-3 py-2">Tipo</th>
+              <th className="px-3 py-2">Descrição</th>
+              <th className="px-3 py-2">Quantidade</th>
+              <th className="px-3 py-2">Valor</th>
               <th className="px-3 py-2 text-center">Ações</th>
             </tr>
           </thead>
           <tbody>
-            {usuarios.map((u) => {
+            {itens.map((u) => {
               return (
                 <tr
                   key={u.id}
                   className="border-b border-gray-800 text-[#9E9E9E] hover:bg-[#161B22] transition"
                 >
                   <td className="px-3 py-2">{u.id}</td>
-                  <td className="px-3 py-2">{u.nome}</td>
-                  <td className="px-3 py-2">{u.email}</td>
-                  <td className="px-3 py-2">{u.tipo_usuario}</td>
+                  <td className="px-3 py-2">{u.descricao}</td>
+                  <td className="px-3 py-2">{u.quantidade}</td>
+                  <td className="px-3 py-2">{u.valor}</td>
                   <td className="px-3 py-2 text-center">
                     <button
-                      onClick={() => editarUsuario(u.id)}
+                      onClick={() => editarItem(u.id)}
                       className="bg-[#2196F3] hover:bg-[#2196F3]/75 text-[#0D1117] p-2 rounded-xl mr-2 transition"
                       title="Editar"
                     >
                       <Edit size={18} />
                     </button>
                     <button
-                      onClick={() => deletarUsuario(u.id)}
+                      onClick={() => deletarItem(u.id)}
                       className="bg-[#FF5252] hover:bg-[#FF5252]/75 text-[#0D1117] p-2 rounded-xl transition"
                       title="Excluir"
                     >
@@ -127,29 +124,29 @@ export default function ListUsers() {
           </tbody>
         </table>
 
-        {usuarios.length === 0 && (
+        {itens.length === 0 && (
           <p className="text-center text-gray-400 mt-6">
-            Nenhum usuário encontrado.
+            Nenhum item encontrado.
           </p>
         )}
       </div>
 
       {/* MODAL DE ADIÇÃO */}
-      <AddUserModal
+      <AddItemModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onUserAdded={carregarUsuarios}
+        onItemAdded={carregarItens}
       />
 
       {/* MODAL DE EDIÇÃO */}
-      <EditUserModal
+      <EditItemModal
         isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
-          setUsuarioSelecionado(null);
+          setItemSelecionado(null);
         }}
-        onUserUpdated={carregarUsuarios}
-        userId={usuarioSelecionado}
+        onItemUpdated={carregarItens}
+        itemId={itemSelecionado}
       />
     </>
   );

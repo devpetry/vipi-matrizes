@@ -14,7 +14,7 @@ export default async function AlterarSenhaPage({ searchParams }: PageProps) {
     if (process.env.NODE_ENV === "development") {
       console.log("⚠️   Já existe sessão: ", session);
     }
-    redirect("/dashboard");
+    redirect("/estoque");
   }
 
   const token = searchParams?.token;

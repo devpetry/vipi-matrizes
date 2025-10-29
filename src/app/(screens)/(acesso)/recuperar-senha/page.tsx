@@ -10,7 +10,7 @@ export default async function RecuperarSenhaPage() {
     if (process.env.NODE_ENV === "development") {
       console.log("⚠️   Já existe sessão: ", session);
     }
-    redirect("/dashboard");
+    redirect("/estoque");
   }
 
   return (

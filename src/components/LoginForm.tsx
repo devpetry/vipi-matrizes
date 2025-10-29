@@ -39,7 +39,7 @@ export default function LoginForm() {
     try {
       await signIn("credentials", {
         ...validation.data,
-        callbackUrl: "/dashboard",
+        callbackUrl: "/estoque",
       });
     } finally {
       setLoading(false);

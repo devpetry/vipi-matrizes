@@ -82,6 +82,31 @@ export const UsuarioEditSchema = z.object({
 
 export type TUsuarioEditSchema = z.infer<typeof UsuarioEditSchema>;
 
+/* ---------------------------- ITEM ---------------------------- */
+export const ItemSchema = z.object({
+  descricao: z
+    .string()
+    .nonempty("A descricao é obrigatória.")
+    .trim()
+    .min(3, "A descricao deve ter pelo menos 3 caracteres."),
+  quantidade: z.string().nonempty("A quantidade é obrigatória."),
+  valor: z.string().nonempty("O valor é obrigatório."),
+});
+
+export type TItemSchema = z.infer<typeof ItemSchema>;
+
+/* ---------------------------- EDIÇÃO DE ITEM ---------------------------- */
+export const ItemEditSchema = z.object({
+  descricao: z
+    .string()
+    .nonempty("A descricao é obrigatória.")
+    .trim()
+    .min(3, "A descricao deve ter pelo menos 3 caracteres."),
+  quantidade: z.string().nonempty("A quantidade é obrigatória."),
+  valor: z.string().nonempty("O valor é obrigatório."),
+});
+
+export type TItemEditSchema = z.infer<typeof ItemEditSchema>;
 /* ---------------------------- CATEGORIA ---------------------------- */
 export const CategoriaSchema = z.object({
   nome: z.string().min(2, "O nome é obrigatório."),

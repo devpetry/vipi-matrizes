@@ -1,10 +1,10 @@
+import ListItens from "@/components/ListItens";
 import SidebarToggle from "@/components/SidebarToggle";
-import ListCategorias from "@/components/ListCategorias";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
-export default async function CategoriasPage() {
+export default async function EstoquePage() {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -17,9 +17,9 @@ export default async function CategoriasPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <main className="w-full max-w-5xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-black mt-4 text-left">Categorias</h1>
+        <h1 className="text-3xl font-black mt-4 text-left">Estoque</h1>
         <SidebarToggle />
-        <ListCategorias />
+        <ListItens />
       </main>
     </div>
   );

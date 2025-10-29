@@ -6,7 +6,6 @@ import {
   LogIn,
   LogOut,
   Menu,
-  Settings,
   Tag,
   Users,
   X,
@@ -47,12 +46,12 @@ export default function SidebarToggle() {
             {session ? (
               <li>
                 <a
-                  href="/dashboard"
+                  href="/estoque"
                   className="block p-2 rounded-lg text-[#E0E0E0] hover:text-[#64B5F6] hover:bg-[#0D1117] flex items-center gap-1"
                   onClick={toggleSidebar}
                 >
                   <LayoutDashboard size={16} />
-                  Dashboard
+                  Estoque
                 </a>
               </li>
             ) : null}
@@ -65,18 +64,6 @@ export default function SidebarToggle() {
                 >
                   <Users size={16} />
                   Usuários
-                </a>
-              </li>
-            ) : null}
-            {session ? (
-              <li>
-                <a
-                  href="/lista-categorias"
-                  className="block p-2 rounded-lg text-[#E0E0E0] hover:text-[#64B5F6] hover:bg-[#0D1117] flex items-center gap-1"
-                  onClick={toggleSidebar}
-                >
-                  <Tag size={16} />
-                  Categorias
                 </a>
               </li>
             ) : null}
