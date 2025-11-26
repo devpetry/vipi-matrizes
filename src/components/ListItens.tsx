@@ -86,7 +86,8 @@ export default function ListItens() {
               <th className="px-3 py-2">ID</th>
               <th className="px-3 py-2">Descrição</th>
               <th className="px-3 py-2">Quantidade</th>
-              <th className="px-3 py-2">Valor (R$)</th>
+              <th className="px-3 py-2">Valor Unitário (R$)</th>
+              <th className="px-3 py-2">Valor Total (R$)</th>
               <th className="px-3 py-2 text-center">Ações</th>
             </tr>
           </thead>
@@ -106,6 +107,7 @@ export default function ListItens() {
                   <td className="px-3 py-2">{u.descricao}</td>
                   <td className="px-3 py-2">{quantidadeFormatada}</td>
                   <td className="px-3 py-2">R$ {valorFormatado}</td>
+                  <td className="px-3 py-2">R$ {(Number(u.valor) * u.quantidade).toFixed(2).replace(".", ",")}</td>
 
                   <td className="px-3 py-2 text-center">
                     <button

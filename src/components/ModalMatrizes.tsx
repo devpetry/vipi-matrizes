@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";
+// 1. Importa o ícone X do lucide-react
+import { X } from "lucide-react";
 
 interface ModalMatrizesProps {
   isOpen: boolean;
@@ -22,10 +24,11 @@ export default function ModalMatrizes({
   const [tipo, setTipo] = useState("");
   const [numeroInicial, setNumeroInicial] = useState("");
   const [numeroFinal, setNumeroFinal] = useState("");
-  const [observacoes, setObservacoes] = useState(""); // <-- novo estado
+  const [observacoes, setObservacoes] = useState("");
 
   const [imagemFile, setImagemFile] = useState<File | null>(null);
   const [imagemUrl, setImagemUrl] = useState<string>("");
+  const [removerImagem, setRemoverImagem] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -46,7 +49,8 @@ export default function ModalMatrizes({
         setNumeroInicial(data.numero_inicial || "");
         setNumeroFinal(data.numero_final || "");
         setImagemUrl(data.imagem_url || "");
-        setObservacoes(data.observacoes || ""); // <-- preenche observações
+        setObservacoes(data.observacoes || "");
+        setRemoverImagem(false);
       } catch {
         alert("Erro ao carregar matriz.");
       } finally {
@@ -64,9 +68,10 @@ export default function ModalMatrizes({
       setTipo("");
       setNumeroInicial("");
       setNumeroFinal("");
-      setObservacoes(""); // <-- limpa observações
+      setObservacoes("");
       setImagemFile(null);
       setImagemUrl("");
+      setRemoverImagem(false);
       setLoading(false);
       setSalvando(false);
       setUploading(false);
@@ -94,7 +99,6 @@ export default function ModalMatrizes({
 
         const data = await uploadRes.json();
         uploadedImageUrl = data.url;
-        setImagemUrl(uploadedImageUrl);
       } catch {
         alert("Erro ao enviar imagem");
         setUploading(false);
@@ -105,14 +109,26 @@ export default function ModalMatrizes({
       }
     }
 
+    let finalImageUrl: string | null = uploadedImageUrl;
+
+    // Se a intenção for remover E não foi feito um novo upload de arquivo, a URL final é null
+    if (removerImagem && !imagemFile) {
+      finalImageUrl = null;
+    }
+
+    // Se um novo arquivo foi selecionado, ele tem precedência
+    if (imagemFile) {
+      finalImageUrl = uploadedImageUrl;
+    }
+
     const body = {
       codigo,
       descricao,
       tipo_matriz: tipo,
-      numero_inicial: numeroInicial ? Number(numeroInicial) : null,
-      numero_final: numeroFinal ? Number(numeroFinal) : null,
-      imagem_url: uploadedImageUrl,
-      observacoes, // <-- adiciona observações
+      numero_inicial: numeroInicial !== "" ? Number(numeroInicial) : null,
+      numero_final: numeroFinal !== "" ? Number(numeroFinal) : null,
+      imagem_url: finalImageUrl,
+      observacoes,
     };
 
     const url =
@@ -142,6 +158,13 @@ export default function ModalMatrizes({
     }
   }
 
+  // Função para limpar a imagem (apenas no cliente)
+  const handleRemoveImage = () => {
+    setImagemFile(null);
+    setImagemUrl("");
+    setRemoverImagem(true);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -163,7 +186,7 @@ export default function ModalMatrizes({
           <p className="text-center py-6 text-[#E0E0E0]">Carregando dados...</p>
         ) : (
           <form onSubmit={handleSubmit}>
-            {/* Código */}
+            {/* ... outros campos ... */}
             <div className="mb-4">
               <label className="block mb-1 text-sm">Código</label>
               <input
@@ -174,7 +197,6 @@ export default function ModalMatrizes({
               />
             </div>
 
-            {/* Descrição */}
             <div className="mb-4">
               <label className="block mb-1 text-sm">Descrição</label>
               <input
@@ -185,7 +207,6 @@ export default function ModalMatrizes({
               />
             </div>
 
-            {/* Tipo */}
             <div className="mb-4">
               <label className="block mb-1 text-sm">Tipo da Matriz</label>
               <input
@@ -196,7 +217,6 @@ export default function ModalMatrizes({
               />
             </div>
 
-            {/* Número Inicial / Final */}
             <div className="flex gap-4">
               <div className="mb-4 flex-1">
                 <label className="block mb-1 text-sm">Número Inicial</label>
@@ -219,7 +239,6 @@ export default function ModalMatrizes({
               </div>
             </div>
 
-            {/* Observações */}
             <div className="mb-4">
               <label className="block mb-1 text-sm">Observações</label>
               <textarea
@@ -231,27 +250,53 @@ export default function ModalMatrizes({
               />
             </div>
 
-            {/* Imagem */}
+            {/* Imagem (Area modificada) */}
             <div className="mb-4">
               <label className="block mb-1 text-sm">Imagem</label>
               <input
                 type="file"
                 accept="image/*"
                 onChange={(e) => {
-                  if (e.target.files?.[0]) setImagemFile(e.target.files[0]);
+                  if (e.target.files?.[0]) {
+                    setImagemFile(e.target.files[0]);
+                    setRemoverImagem(false);
+                  }
                 }}
                 className="w-full text-sm text-gray-200"
               />
-              {imagemUrl && (
-                <img
-                  src={imagemUrl}
-                  alt="Preview"
-                  className="mt-2 h-24 object-contain rounded"
-                />
-              )}
-            </div>
 
-            {/* Botões */}
+              {/* Visualização da imagem com o botão X para remover */}
+              {imagemUrl && !removerImagem ? (
+                // 2. Adiciona position relative para que o botão X fique absolute
+                <div className="relative mt-4 inline-block">
+                  <img
+                    src={imagemUrl}
+                    alt="Preview"
+                    className="h-24 object-contain rounded"
+                  />
+                  {/* Botão de Remoção com ícone X */}
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    // Posiciona o botão no canto superior direito da imagem
+                    className="absolute -top-2 -right-2 bg-red-600/90 text-white rounded-full p-[2px] shadow-lg hover:bg-red-500 transition-colors"
+                    aria-label="Remover imagem atual"
+                  >
+                    {/* Ícone X do Lucide React */}
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : imagemFile && !removerImagem ? (
+                <p className="mt-2 text-sm text-yellow-400">
+                  Nova imagem selecionada: {imagemFile.name}
+                </p>
+              ) : removerImagem && !imagemFile && mode === "edit" ? (
+                <p className="mt-2 text-sm text-red-400">
+                  A imagem será removida ao salvar.
+                </p>
+              ) : null}
+            </div>
+            {/* ... Botões ... */}
             <div className="flex justify-end space-x-3 pt-2">
               <button
                 type="button"
