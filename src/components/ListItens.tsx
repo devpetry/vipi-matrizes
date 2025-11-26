@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import AddItemModal from "./AddItemModal";
-import EditItemModal from "./EditItemModal";
 import { Edit, Plus, Trash2 } from "lucide-react";
+import ModalItens from "./ModalItens";
 
 interface EstoqueItem {
   id: number;
@@ -87,7 +86,7 @@ export default function ListItens() {
               <th className="px-3 py-2">ID</th>
               <th className="px-3 py-2">Descrição</th>
               <th className="px-3 py-2">Quantidade</th>
-              <th className="px-3 py-2">Valor</th>
+              <th className="px-3 py-2">Valor (R$)</th>
               <th className="px-3 py-2 text-center">Ações</th>
             </tr>
           </thead>
@@ -131,21 +130,19 @@ export default function ListItens() {
         )}
       </div>
 
-      {/* MODAL DE ADIÇÃO */}
-      <AddItemModal
+      <ModalItens
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onItemAdded={carregarItens}
+        onSaved={carregarItens}
       />
 
-      {/* MODAL DE EDIÇÃO */}
-      <EditItemModal
+      <ModalItens
         isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
           setItemSelecionado(null);
         }}
-        onItemUpdated={carregarItens}
+        onSaved={carregarItens}
         itemId={itemSelecionado}
       />
     </>

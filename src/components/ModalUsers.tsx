@@ -1,14 +1,22 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { UsuarioEditSchema, TUsuarioEditSchema } from "@/schemas/auth";
+import {
+  UsuarioSchema,
+  UsuarioEditSchema,
+  TUsuarioSchema,
+  TUsuarioEditSchema,
+} from "@/schemas/auth";
 
-type FormErrors = Partial<Record<keyof TUsuarioEditSchema, string>>;
-interface EditUserModalProps {
+type FormErrors = Partial<
+  Record<keyof TUsuarioSchema | keyof TUsuarioEditSchema, string>
+>;
+
+interface ModalUsersProps {
   isOpen: boolean;
   onClose: () => void;
-  onUserUpdated: () => void;
-  userId: number | null;
+  onSaved: () => void;
+  userId?: number | null;
 }
 
 const TIPOS_USUARIO = [
@@ -23,75 +31,67 @@ const getTipoIdByNome = (nome?: string | null): string => {
   return tipo ? String(tipo.id) : "";
 };
 
-export default function EditUserModal({
+export default function ModalUsers({
   isOpen,
   onClose,
-  onUserUpdated,
+  onSaved,
   userId,
-}: EditUserModalProps) {
+}: ModalUsersProps) {
+  const editMode = Boolean(userId);
+
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
+  const [tipoUsuario, setTipoUsuario] = useState("");
+  const [senha, setSenha] = useState("");
+
   const [errors, setErrors] = useState<FormErrors>({});
-
-  const [tipoUsuarioSelecionado, setTipoUsuarioSelecionado] =
-    useState<string>("");
-
   const [loading, setLoading] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
-    if (isOpen && userId) {
+    if (isOpen && editMode && userId) {
       setNome("");
       setEmail("");
-      setTipoUsuarioSelecionado("");
-
+      setSenha("");
+      setTipoUsuario("");
       setLoading(true);
-      const fetchUser = async () => {
-        try {
-          const res = await fetch(`/api/auth/usuarios/${userId}`);
-          if (res.ok) {
-            const data = await res.json();
-            setNome(data.nome || "");
-            setEmail(data.email || "");
-            const tipoId = getTipoIdByNome(data.tipo_usuario);
-            setTipoUsuarioSelecionado(tipoId);
-          } else {
-            console.error("Erro ao carregar usuário:", res.statusText);
-            alert("Erro ao carregar informações do usuário.");
-            onClose();
-          }
-        } catch (error) {
-          console.error("Erro na requisição GET:", error);
-          alert("Falha ao carregar usuário.");
+
+      fetch(`/api/auth/usuarios/${userId}`)
+        .then(async (res) => {
+          if (!res.ok) throw new Error("Falha no GET");
+          const data = await res.json();
+
+          setNome(data.nome || "");
+          setEmail(data.email || "");
+          const tipoId = getTipoIdByNome(data.tipo_usuario);
+          setTipoUsuario(tipoId || "");
+        })
+        .catch(() => {
+          alert("Erro ao carregar informações do usuário.");
           onClose();
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchUser();
-    } else if (!isOpen){
-      setErrors({});
+        })
+        .finally(() => setLoading(false));
     }
-  }, [isOpen, userId, onClose]);
+
+    if (!isOpen) setErrors({});
+  }, [isOpen, editMode, userId, onClose]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
 
     const formData = new FormData(e.currentTarget);
-    const nome = formData.get("nome");
-    const email = formData.get("email");
-    const tipo_usuario = formData.get("tipo_usuario");
-    const senha = formData.get("senha");
 
     const data = {
-      nome,
-      email,
-      tipo_usuario,
-      senha,
+      nome: formData.get("nome"),
+      email: formData.get("email"),
+      tipo_usuario: formData.get("tipo_usuario"),
+      senha: formData.get("senha"),
     };
 
-    const validation = UsuarioEditSchema.safeParse(data);
+    const validation = editMode
+      ? UsuarioEditSchema.safeParse(data)
+      : UsuarioSchema.safeParse(data);
 
     if (!validation.success) {
       const fieldErrors: FormErrors = {};
@@ -103,41 +103,41 @@ export default function EditUserModal({
       return;
     }
 
-    if (!userId) return;
-
     setSalvando(true);
 
-    const tipoUsuarioToUpdate =
-      tipoUsuarioSelecionado !== "" ? tipoUsuarioSelecionado : "";
-
     try {
-      const res = await fetch(`/api/auth/usuarios/${userId}`, {
-        method: "PUT",
+      const url = editMode
+        ? `/api/auth/usuarios/${userId}`
+        : "/api/auth/usuarios";
+
+      const method = editMode ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nome,
-          email,
-          tipo_usuario: tipoUsuarioToUpdate,
+          nome: data.nome,
+          email: data.email,
+          tipo_usuario: data.tipo_usuario,
+          ...(editMode ? {} : { senha: data.senha }),
         }),
       });
 
       if (res.ok) {
-        onUserUpdated();
+        onSaved();
         onClose();
       } else {
         const errorData = await res.json();
-        console.error("Erro ao atualizar usuário:", errorData);
-        alert(`Erro ao atualizar: ${errorData.error || res.statusText}`);
+        alert(`Erro: ${errorData.error || res.statusText}`);
       }
-    } catch (error) {
-      console.error("Erro na requisição PUT:", error);
-      alert("Erro de conexão ao atualizar usuário.");
+    } catch {
+      alert("Erro de conexão.");
     } finally {
       setSalvando(false);
     }
   };
 
-  if (!isOpen || !userId) return null;
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 backdrop-blur-sm">
@@ -150,7 +150,7 @@ export default function EditUserModal({
           <>
             <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
               <h2 className="text-xl font-semibold text-[#E0E0E0]">
-                Editar Usuário
+                {editMode ? "Editar Usuário" : "Novo Usuário"}
               </h2>
               <button
                 onClick={onClose}
@@ -162,9 +162,10 @@ export default function EditUserModal({
             </div>
 
             <form onSubmit={handleSubmit}>
+              {/* Nome */}
               <div className="mb-4">
                 <label
-                  className="block text-sm font-medium mb-1 text-[#E0E0E0]"
+                  className="block text-sm font-medium mb-1"
                   htmlFor="nome"
                 >
                   Nome
@@ -176,20 +177,21 @@ export default function EditUserModal({
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   className={`w-full px-4 py-2 bg-[#0D1117] text-[#E0E0E0] outline-none rounded-xl 
-                  ${
-                    errors.nome
-                      ? "border-2 border-[#FF5252]"
-                      : "focus:ring-2 focus:ring-[#2196F3]"
-                  }`}
+                    ${
+                      errors.nome
+                        ? "border-2 border-[#FF5252]"
+                        : "focus:ring-2 focus:ring-[#2196F3]"
+                    }`}
                 />
                 {errors.nome && (
                   <p className="text-[#FF5252] text-xs mt-1">{errors.nome}</p>
                 )}
               </div>
 
+              {/* Email */}
               <div className="mb-4">
                 <label
-                  className="block text-sm font-medium mb-1 text-[#E0E0E0]"
+                  className="block text-sm font-medium mb-1"
                   htmlFor="email"
                 >
                   E-mail
@@ -197,46 +199,82 @@ export default function EditUserModal({
                 <input
                   id="email"
                   name="email"
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={`w-full px-4 py-2 bg-[#0D1117] text-[#E0E0E0] outline-none rounded-xl 
-                  ${
-                    errors.email
-                      ? "border-2 border-[#FF5252]"
-                      : "focus:ring-2 focus:ring-[#2196F3]"
-                  }`}
+                    ${
+                      errors.email
+                        ? "border-2 border-[#FF5252]"
+                        : "focus:ring-2 focus:ring-[#2196F3]"
+                    }`}
                 />
                 {errors.email && (
                   <p className="text-[#FF5252] text-xs mt-1">{errors.email}</p>
                 )}
               </div>
+
+              {/* Tipo */}
               <div className="mb-4">
                 <label
-                  className="block text-sm font-medium mb-1 text-[#E0E0E0]"
+                  className="block text-sm font-medium mb-1"
                   htmlFor="tipo_usuario"
                 >
                   Tipo de Usuário
                 </label>
                 <select
-                  name="tipo_usuario"
                   id="tipo_usuario"
-                  value={tipoUsuarioSelecionado}
-                  onChange={(e) => setTipoUsuarioSelecionado(e.target.value)}
-                  className={`w-full px-4 py-2 bg-[#0D1117] text-[#E0E0E0] outline-none rounded-xl appearance-none cursor-pointer
-              ${"focus:ring-2 focus:ring-[#2196F3]"}`}
+                  name="tipo_usuario"
+                  value={tipoUsuario}
+                  onChange={(e) => setTipoUsuario(e.target.value)}
+                  className="w-full px-4 py-2 bg-[#0D1117] text-[#E0E0E0] outline-none rounded-xl appearance-none cursor-pointer focus:ring-2 focus:ring-[#2196F3]"
                 >
                   <option value="" disabled>
                     Selecione o tipo de usuário
                   </option>
-                  {TIPOS_USUARIO.map((tipo) => (
-                    <option key={tipo.id} value={String(tipo.id)}>
-                      {tipo.nome}
+
+                  {TIPOS_USUARIO.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.nome}
                     </option>
                   ))}
                 </select>
               </div>
 
+              {/* Senha (somente no modo adicionar) */}
+              {!editMode && (
+                <div className="mb-4">
+                  <label
+                    className="block text-sm font-medium mb-1"
+                    htmlFor="senha"
+                  >
+                    Senha
+                  </label>
+                  <input
+                    id="senha"
+                    name="senha"
+                    type="password"
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    className={`w-full px-4 py-2 bg-[#0D1117] text-[#E0E0E0] outline-none rounded-xl 
+                      ${
+                        errors.senha
+                          ? "border-2 border-[#FF5252]"
+                          : "focus:ring-2 focus:ring-[#2196F3]"
+                      }`}
+                  />
+                  {errors.senha && (
+                    <p className="text-[#FF5252] text-xs mt-1">
+                      {errors.senha}
+                    </p>
+                  )}
+                  <label className="text-xs text-[#9E9E9E] mt-1">
+                    * Recomendamos alterar a senha no primeiro login
+                  </label>
+                </div>
+              )}
+
+              {/* Botões */}
               <div className="flex justify-end space-x-3">
                 <button
                   type="button"
@@ -246,6 +284,7 @@ export default function EditUserModal({
                 >
                   Cancelar
                 </button>
+
                 <button
                   type="submit"
                   disabled={salvando}

@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import AddUserModal from "./AddUserModal";
-import EditUserModal from "./EditUserModal";
+import ModalUsers from "./ModalUsers";
 import { Edit, Plus, Trash2 } from "lucide-react";
 
 interface Usuario {
@@ -134,21 +133,19 @@ export default function ListUsers() {
         )}
       </div>
 
-      {/* MODAL DE ADIÇÃO */}
-      <AddUserModal
+      <ModalUsers
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onUserAdded={carregarUsuarios}
+        onSaved={carregarUsuarios}
       />
 
-      {/* MODAL DE EDIÇÃO */}
-      <EditUserModal
+      <ModalUsers
         isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
           setUsuarioSelecionado(null);
         }}
-        onUserUpdated={carregarUsuarios}
+        onSaved={carregarUsuarios}
         userId={usuarioSelecionado}
       />
     </>

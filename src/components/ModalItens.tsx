@@ -1,138 +1,138 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { ItemEditSchema, TItemEditSchema } from "@/schemas/auth";
+import {
+  ItemSchema,
+  ItemEditSchema,
+  TItemSchema,
+  TItemEditSchema,
+} from "@/schemas/auth";
 
-type FormErrors = Partial<Record<keyof TItemEditSchema, string>>;
-interface EditItemModalProps {
+type FormErrors =
+  | Partial<Record<keyof TItemSchema, string>>
+  | Partial<Record<keyof TItemEditSchema, string>>;
+
+interface ModalItensProps {
   isOpen: boolean;
   onClose: () => void;
-  onItemUpdated: () => void;
-  itemId: number | null;
+  onSaved: () => void;
+  itemId?: number | null;
 }
 
-export default function EditItemModal({
+export default function ModalItens({
   isOpen,
   onClose,
-  onItemUpdated,
+  onSaved,
   itemId,
-}: EditItemModalProps) {
+}: ModalItensProps) {
+  const editMode = Boolean(itemId);
+
   const [descricao, setDescricao] = useState("");
   const [quantidade, setQuantidade] = useState("");
   const [valor, setValor] = useState("");
-  const [errors, setErrors] = useState<FormErrors>({});
 
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
-    if (isOpen && itemId) {
+    if (isOpen && editMode && itemId) {
       setDescricao("");
       setQuantidade("");
       setValor("");
-
       setLoading(true);
-      const fetchItem = async () => {
-        try {
-          const res = await fetch(`/api/auth/itens/${itemId}`);
-          if (res.ok) {
-            const data = await res.json();
-            setDescricao(data.descricao || "");
-            setQuantidade(data.quantidade || "");
-            setValor(data.valor || "");
-          } else {
-            console.error("Erro ao carregar item:", res.statusText);
-            alert("Erro ao carregar informações do item.");
-            onClose();
-          }
-        } catch (error) {
-          console.error("Erro na requisição GET:", error);
-          alert("Falha ao carregar item.");
+
+      fetch(`/api/auth/itens/${itemId}`)
+        .then(async (res) => {
+          if (!res.ok) throw new Error("Falha no GET");
+          const data = await res.json();
+          setDescricao(data.descricao || "");
+          setQuantidade(String(data.quantidade || ""));
+          setValor(String(data.valor || ""));
+        })
+        .catch(() => {
+          alert("Erro ao carregar informações do item.");
           onClose();
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchItem();
-    } else if (!isOpen) {
-      setErrors({});
+        })
+        .finally(() => setLoading(false));
     }
-  }, [isOpen, itemId, onClose]);
+
+    if (!isOpen) setErrors({});
+  }, [isOpen, itemId, editMode, onClose]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
 
     const formData = new FormData(e.currentTarget);
-    const descricao = formData.get("descricao");
-    const quantidade = formData.get("quantidade");
-    const tipo_usuario = formData.get("tipo_usuario");
-    const senha = formData.get("senha");
+    const descricaoF = formData.get("descricao");
+    const quantidadeF = formData.get("quantidade");
+    const valorF = formData.get("valor");
 
     const data = {
-      descricao,
-      quantidade,
-      tipo_usuario,
-      senha,
+      descricao: descricaoF,
+      quantidade: quantidadeF,
+      valor: valorF,
     };
 
-    const validation = ItemEditSchema.safeParse(data);
+    const validation = editMode
+      ? ItemEditSchema.safeParse(data)
+      : ItemSchema.safeParse(data);
 
     if (!validation.success) {
       const fieldErrors: FormErrors = {};
       for (const issue of validation.error.issues) {
-        const key = issue.path[0] as keyof FormErrors;
-        fieldErrors[key] = issue.message;
+        const key = issue.path[0] as string;
+        fieldErrors[key as keyof FormErrors] = issue.message;
       }
       setErrors(fieldErrors);
       return;
     }
 
-    if (!itemId) return;
-
     setSalvando(true);
 
     try {
-      const res = await fetch(`/api/auth/itens/${itemId}`, {
-        method: "PUT",
+      const url = editMode ? `/api/auth/itens/${itemId}` : "/api/auth/itens";
+      const method = editMode ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          descricao,
-          quantidade,
-          valor,
+          descricao: descricaoF,
+          quantidade: quantidadeF,
+          valor: valorF,
         }),
       });
 
       if (res.ok) {
-        onItemUpdated();
+        onSaved();
         onClose();
       } else {
         const errorData = await res.json();
-        console.error("Erro ao atualizar usuário:", errorData);
-        alert(`Erro ao atualizar: ${errorData.error || res.statusText}`);
+        alert(`Erro: ${errorData.error || res.statusText}`);
       }
-    } catch (error) {
-      console.error("Erro na requisição PUT:", error);
-      alert("Erro de conexão ao atualizar usuário.");
+    } catch {
+      alert("Erro de conexão.");
     } finally {
       setSalvando(false);
     }
   };
 
-  if (!isOpen || !itemId) return null;
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 backdrop-blur-sm">
       <div className="bg-[#161B22] p-6 rounded-2xl w-full max-w-md shadow-2xl text-white relative">
         {loading ? (
           <p className="text-center text-[#E0E0E0] py-8">
-            Carregando dados do usuário...
+            Carregando dados do item...
           </p>
         ) : (
           <>
             <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
               <h2 className="text-xl font-semibold text-[#E0E0E0]">
-                Editar Item
+                {editMode ? "Editar Item" : "Novo Item"}
               </h2>
               <button
                 onClick={onClose}
@@ -146,7 +146,7 @@ export default function EditItemModal({
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label
-                  className="block text-sm font-medium mb-1 text-[#E0E0E0]"
+                  className="block text-sm font-medium mb-1"
                   htmlFor="descricao"
                 >
                   Descrição
@@ -158,11 +158,11 @@ export default function EditItemModal({
                   value={descricao}
                   onChange={(e) => setDescricao(e.target.value)}
                   className={`w-full px-4 py-2 bg-[#0D1117] text-[#E0E0E0] outline-none rounded-xl 
-                  ${
-                    errors.descricao
-                      ? "border-2 border-[#FF5252]"
-                      : "focus:ring-2 focus:ring-[#2196F3]"
-                  }`}
+                    ${
+                      errors.descricao
+                        ? "border-2 border-[#FF5252]"
+                        : "focus:ring-2 focus:ring-[#2196F3]"
+                    }`}
                 />
                 {errors.descricao && (
                   <p className="text-[#FF5252] text-xs mt-1">
@@ -173,7 +173,7 @@ export default function EditItemModal({
 
               <div className="mb-4">
                 <label
-                  className="block text-sm font-medium mb-1 text-[#E0E0E0]"
+                  className="block text-sm font-medium mb-1"
                   htmlFor="quantidade"
                 >
                   Quantidade
@@ -181,15 +181,15 @@ export default function EditItemModal({
                 <input
                   id="quantidade"
                   name="quantidade"
-                  type="quantidade"
+                  type="text"
                   value={quantidade}
                   onChange={(e) => setQuantidade(e.target.value)}
                   className={`w-full px-4 py-2 bg-[#0D1117] text-[#E0E0E0] outline-none rounded-xl 
-                  ${
-                    errors.quantidade
-                      ? "border-2 border-[#FF5252]"
-                      : "focus:ring-2 focus:ring-[#2196F3]"
-                  }`}
+                    ${
+                      errors.quantidade
+                        ? "border-2 border-[#FF5252]"
+                        : "focus:ring-2 focus:ring-[#2196F3]"
+                    }`}
                 />
                 {errors.quantidade && (
                   <p className="text-[#FF5252] text-xs mt-1">
@@ -197,9 +197,10 @@ export default function EditItemModal({
                   </p>
                 )}
               </div>
+
               <div className="mb-4">
                 <label
-                  className="block text-sm font-medium mb-1 text-[#E0E0E0]"
+                  className="block text-sm font-medium mb-1"
                   htmlFor="valor"
                 >
                   Valor
@@ -207,15 +208,15 @@ export default function EditItemModal({
                 <input
                   id="valor"
                   name="valor"
-                  type="valor"
+                  type="text"
                   value={valor}
                   onChange={(e) => setValor(e.target.value)}
                   className={`w-full px-4 py-2 bg-[#0D1117] text-[#E0E0E0] outline-none rounded-xl 
-                  ${
-                    errors.valor
-                      ? "border-2 border-[#FF5252]"
-                      : "focus:ring-2 focus:ring-[#2196F3]"
-                  }`}
+                    ${
+                      errors.valor
+                        ? "border-2 border-[#FF5252]"
+                        : "focus:ring-2 focus:ring-[#2196F3]"
+                    }`}
                 />
                 {errors.valor && (
                   <p className="text-[#FF5252] text-xs mt-1">{errors.valor}</p>

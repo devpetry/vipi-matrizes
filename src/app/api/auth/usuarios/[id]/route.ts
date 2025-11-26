@@ -64,7 +64,7 @@ export async function PUT(
     const rows = await query(
       `UPDATE usuarios 
        SET nome=$1, email=$2, "tipo_usuario"=$3, "atualizado_em"=NOW() 
-       WHERE id=$5 
+       WHERE id=$4 
        RETURNING id, nome, email, "tipo_usuario", "criado_em", "atualizado_em"`,
       [nome, email, enum_tipo_usuario, id]
     );
