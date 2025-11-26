@@ -1,55 +1,75 @@
 import SidebarToggle from "@/components/SidebarToggle";
 import Image from "next/image";
 
-const matrizes = [
-  { id: 1, nome: "Matriz 1", categoria: "Categoria X" },
-  { id: 2, nome: "Matriz 2", categoria: "Categoria X" },
-  { id: 3, nome: "Matriz 3", categoria: "Categoria X" },
-  { id: 4, nome: "Matriz 4", categoria: "Categoria X" },
-  { id: 5, nome: "Matriz 5", categoria: "Categoria X" },
-  { id: 6, nome: "Matriz 6", categoria: "Categoria X" },
-  { id: 7, nome: "Matriz 7", categoria: "Categoria X" },
-  { id: 8, nome: "Matriz 8", categoria: "Categoria X" },
-  { id: 9, nome: "Matriz 9", categoria: "Categoria X" },
-];
+interface Matriz {
+  id: number;
+  descricao: string;
+  tipo_matriz?: string;
+  imagem_url?: string;
+}
 
-export default function Home() {
+async function getMatrizes() {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/matrizes`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error("Erro ao carregar matrizes");
+  }
+
+  return res.json();
+}
+
+export default async function Home() {
+  const matrizes = await getMatrizes();
+
   return (
-    <div className="flex min-h-screen flex-col items-center">
-      <main>
-        <h1 className="text-3xl font-black mt-4">Catálogo de Matrizes</h1>
+    <main className="p-12 bg-[#0D1117] min-h-screen text-[#E0E0E0]">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-4xl font-black">Catálogo de Matrizes</h1>
         <SidebarToggle />
-        {/* Grid de matrizes */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-8">
-          {matrizes.map((m) => (
-            <div
-              key={m.id}
-              className="bg-[#E0E0E0] p-4 rounded-lg shadow-md flex items-center justify-between gap-4"
-            >
-              <div>
-                <h3 className="font-bold text-[#0D1117]">{m.nome}</h3>
-                <p className="text-[#0D1117]/75">{m.categoria}</p>
-                <a
-                  href="#"
-                  className="inline-block mt-2 text-[#2196F3] font-medium hover:underline cursor-pointer"
-                >
-                  Ver Detalhes →
-                </a>
-              </div>
+      </div>
 
-              <div className="h-20 w-20 flex items-center justify-center rounded-md overflow-hidden bg-[#9E9E9E]">
-                <Image
-                  src="/images/default.png"
-                  alt={`Imagem da ${m.nome}`}
-                  width={80}
-                  height={80}
-                  className="object-cover"
-                />
-              </div>
+      {/* Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        {matrizes.map((m: Matriz) => (
+          <a
+            key={m.id}
+            href={`/matrizes/${m.id}`}
+            className="group bg-white p-5 rounded-xl shadow-md border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
+          >
+            {/* Imagem */}
+            <div className="w-full h-40 rounded-lg overflow-hidden bg-gray-200 flex items-center justify-center">
+              <Image
+                src={m.imagem_url || "/images/default.png"}
+                alt={`Imagem da ${m.descricao}`}
+                width={200}
+                height={200}
+                className="object-cover w-full h-full"
+              />
             </div>
-          ))}
-        </div>
-      </main>
-    </div>
+
+            {/* Infos */}
+            <div className="mt-4 flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition">
+                {m.descricao}
+              </h3>
+
+              <p className="text-sm text-gray-600 mt-1">
+                {m.tipo_matriz || "Sem categoria"}
+              </p>
+            </div>
+
+            {/* Ver detalhes */}
+            <span className="mt-4 text-blue-600 font-medium group-hover:underline">
+              Ver detalhes →
+            </span>
+          </a>
+        ))}
+      </div>
+    </main>
   );
 }
