@@ -22,6 +22,7 @@ export default function ModalMatrizes({
   const [tipo, setTipo] = useState("");
   const [numeroInicial, setNumeroInicial] = useState("");
   const [numeroFinal, setNumeroFinal] = useState("");
+  const [observacoes, setObservacoes] = useState(""); // <-- novo estado
 
   const [imagemFile, setImagemFile] = useState<File | null>(null);
   const [imagemUrl, setImagemUrl] = useState<string>("");
@@ -45,6 +46,7 @@ export default function ModalMatrizes({
         setNumeroInicial(data.numero_inicial || "");
         setNumeroFinal(data.numero_final || "");
         setImagemUrl(data.imagem_url || "");
+        setObservacoes(data.observacoes || ""); // <-- preenche observações
       } catch {
         alert("Erro ao carregar matriz.");
       } finally {
@@ -62,6 +64,7 @@ export default function ModalMatrizes({
       setTipo("");
       setNumeroInicial("");
       setNumeroFinal("");
+      setObservacoes(""); // <-- limpa observações
       setImagemFile(null);
       setImagemUrl("");
       setLoading(false);
@@ -109,6 +112,7 @@ export default function ModalMatrizes({
       numero_inicial: numeroInicial ? Number(numeroInicial) : null,
       numero_final: numeroFinal ? Number(numeroFinal) : null,
       imagem_url: uploadedImageUrl,
+      observacoes, // <-- adiciona observações
     };
 
     const url =
@@ -159,6 +163,7 @@ export default function ModalMatrizes({
           <p className="text-center py-6 text-[#E0E0E0]">Carregando dados...</p>
         ) : (
           <form onSubmit={handleSubmit}>
+            {/* Código */}
             <div className="mb-4">
               <label className="block mb-1 text-sm">Código</label>
               <input
@@ -169,6 +174,7 @@ export default function ModalMatrizes({
               />
             </div>
 
+            {/* Descrição */}
             <div className="mb-4">
               <label className="block mb-1 text-sm">Descrição</label>
               <input
@@ -179,6 +185,7 @@ export default function ModalMatrizes({
               />
             </div>
 
+            {/* Tipo */}
             <div className="mb-4">
               <label className="block mb-1 text-sm">Tipo da Matriz</label>
               <input
@@ -189,6 +196,7 @@ export default function ModalMatrizes({
               />
             </div>
 
+            {/* Número Inicial / Final */}
             <div className="flex gap-4">
               <div className="mb-4 flex-1">
                 <label className="block mb-1 text-sm">Número Inicial</label>
@@ -211,6 +219,19 @@ export default function ModalMatrizes({
               </div>
             </div>
 
+            {/* Observações */}
+            <div className="mb-4">
+              <label className="block mb-1 text-sm">Observações</label>
+              <textarea
+                value={observacoes}
+                onChange={(e) => setObservacoes(e.target.value)}
+                className="w-full px-4 py-2 bg-[#0D1117] text-[#E0E0E0] rounded-xl border border-gray-700 outline-none hover:border-[#2196F3]/50 focus:border-[#2196F3]"
+                rows={4}
+                placeholder="Digite observações sobre a matriz..."
+              />
+            </div>
+
+            {/* Imagem */}
             <div className="mb-4">
               <label className="block mb-1 text-sm">Imagem</label>
               <input
@@ -230,6 +251,7 @@ export default function ModalMatrizes({
               )}
             </div>
 
+            {/* Botões */}
             <div className="flex justify-end space-x-3 pt-2">
               <button
                 type="button"

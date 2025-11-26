@@ -7,6 +7,7 @@ import {
   LogOut,
   Menu,
   Newspaper,
+  PlusCircle,
   Tag,
   Users,
   X,
@@ -44,6 +45,16 @@ export default function SidebarToggle() {
           </h3>
 
           <ul className="space-y-1">
+              <li>
+                <a
+                  href="/catalogo"
+                  className="block p-2 rounded-lg text-[#E0E0E0] hover:text-[#64B5F6] hover:bg-[#0D1117] flex items-center gap-1"
+                  onClick={toggleSidebar}
+                >
+                  <Newspaper size={16} />
+                  Catálogo
+                </a>
+              </li>
             {session ? (
               <li>
                 <a
@@ -51,7 +62,7 @@ export default function SidebarToggle() {
                   className="block p-2 rounded-lg text-[#E0E0E0] hover:text-[#64B5F6] hover:bg-[#0D1117] flex items-center gap-1"
                   onClick={toggleSidebar}
                 >
-                  <Newspaper size={16} />
+                  <PlusCircle size={16} />
                   Matrizes
                 </a>
               </li>
