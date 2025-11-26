@@ -6,7 +6,7 @@ export async function GET() {
   try {
     const result = await query(
       `SELECT id, descricao, quantidade, valor, atualizado_em, atualizado_por
-       FROM "Itens"
+       FROM itens
        WHERE data_exclusao IS NULL
        ORDER BY id ASC`,
       []
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     }
 
     const result = await query(
-      `INSERT INTO "Itens" (descricao, quantidade, valor, atualizado_em, atualizado_por)
+      `INSERT INTO itens (descricao, quantidade, valor, atualizado_em, atualizado_por)
        VALUES ($1, $2, $3, NOW(), $4)
        RETURNING id, descricao, quantidade, valor, atualizado_em, atualizado_por`,
       [descricao, quantidade, valor, atualizado_por || null]

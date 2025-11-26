@@ -13,7 +13,7 @@ export async function GET() {
   try {
     const result = await query(
       `SELECT id, nome, email, "tipo_usuario", "criado_em" 
-      FROM "Usuarios" 
+      FROM usuarios 
       WHERE data_exclusao IS NULL 
       ORDER BY id ASC`,
       []
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     const enum_tipo_usuario = TIPO_USUARIO_MAP[tipo_usuario as keyof typeof TIPO_USUARIO_MAP];
 
     const result = await query(
-      `INSERT INTO "Usuarios" (nome, email, "tipo_usuario", "senha_hash", "criado_em", "atualizado_em")
+      `INSERT INTO usuarios (nome, email, "tipo_usuario", "senha_hash", "criado_em", "atualizado_em")
        VALUES ($1, $2, $3, $4, NOW(), NOW())
        RETURNING id, nome, email, "tipo_usuario", "criado_em"`,
       [nome, email, enum_tipo_usuario, senha_hash]

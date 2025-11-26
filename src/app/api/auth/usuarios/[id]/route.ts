@@ -17,7 +17,7 @@ export async function GET(
 
     const rows = await query(
       `SELECT id, nome, email, "tipo_usuario", "criado_em", "atualizado_em"
-       FROM "Usuarios"
+       FROM usuarios
        WHERE id = $1
        AND data_exclusao IS NULL`,
       [id]
@@ -62,7 +62,7 @@ export async function PUT(
     }
 
     const rows = await query(
-      `UPDATE "Usuarios" 
+      `UPDATE usuarios 
        SET nome=$1, email=$2, "tipo_usuario"=$3, "atualizado_em"=NOW() 
        WHERE id=$5 
        RETURNING id, nome, email, "tipo_usuario", "criado_em", "atualizado_em"`,
@@ -103,7 +103,7 @@ export async function DELETE(
     }
 
     const rows = await query(
-      `UPDATE "Usuarios"
+      `UPDATE usuarios
        SET data_exclusao = NOW()
        WHERE id = $1
        AND data_exclusao IS NULL

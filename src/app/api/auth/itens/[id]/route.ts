@@ -11,7 +11,7 @@ export async function GET(
 
     const rows = await query(
       `SELECT id, descricao, quantidade, valor, atualizado_em, atualizado_por
-       FROM "Itens"
+       FROM itens
        WHERE id = $1
        AND data_exclusao IS NULL`,
       [id]
@@ -51,7 +51,7 @@ export async function PUT(
     }
 
     const rows = await query(
-      `UPDATE "Itens"
+      `UPDATE itens
        SET descricao = $1, quantidade = $2, valor = $3,
            atualizado_em = NOW(), atualizado_por = $4
        WHERE id = $5
@@ -93,7 +93,7 @@ export async function DELETE(
     }
 
     const rows = await query(
-      `UPDATE "Itens"
+      `UPDATE itens
        SET data_exclusao = NOW()
        WHERE id = $1
        AND data_exclusao IS NULL
