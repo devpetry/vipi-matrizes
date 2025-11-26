@@ -89,8 +89,15 @@ export const ItemSchema = z.object({
     .nonempty("A descricao é obrigatória.")
     .trim()
     .min(3, "A descricao deve ter pelo menos 3 caracteres."),
-  quantidade: z.string().nonempty("A quantidade é obrigatória."),
-  valor: z.string().nonempty("O valor é obrigatório."),
+  quantidade: z
+    .union([z.string(), z.number()])
+    .transform((v) => String(v))
+    .refine((v) => v.length > 0, "A quantidade é obrigatória."),
+
+  valor: z
+    .union([z.string(), z.number()])
+    .transform((v) => String(v))
+    .refine((v) => v.length > 0, "O valor é obrigatório."),
 });
 
 export type TItemSchema = z.infer<typeof ItemSchema>;
@@ -102,8 +109,15 @@ export const ItemEditSchema = z.object({
     .nonempty("A descricao é obrigatória.")
     .trim()
     .min(3, "A descricao deve ter pelo menos 3 caracteres."),
-  quantidade: z.string().nonempty("A quantidade é obrigatória."),
-  valor: z.string().nonempty("O valor é obrigatório."),
+  quantidade: z
+    .union([z.string(), z.number()])
+    .transform((v) => String(v))
+    .refine((v) => v.length > 0, "A quantidade é obrigatória."),
+
+  valor: z
+    .union([z.string(), z.number()])
+    .transform((v) => String(v))
+    .refine((v) => v.length > 0, "O valor é obrigatório."),
 });
 
 export type TItemEditSchema = z.infer<typeof ItemEditSchema>;

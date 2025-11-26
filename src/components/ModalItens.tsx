@@ -1,251 +1,262 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import {
   ItemSchema,
   ItemEditSchema,
   TItemSchema,
   TItemEditSchema,
 } from "@/schemas/auth";
-
-type FormErrors =
-  | Partial<Record<keyof TItemSchema, string>>
-  | Partial<Record<keyof TItemEditSchema, string>>;
+import { NumericFormat } from "react-number-format";
 
 interface ModalItensProps {
   isOpen: boolean;
   onClose: () => void;
   onSaved: () => void;
-  itemId?: number | null;
+  itemId: number | null;
+  mode: "create" | "edit";
 }
+
+type FormErrors = Partial<
+  Record<keyof TItemSchema | keyof TItemEditSchema, string>
+>;
 
 export default function ModalItens({
   isOpen,
   onClose,
   onSaved,
   itemId,
+  mode,
 }: ModalItensProps) {
-  const editMode = Boolean(itemId);
-
   const [descricao, setDescricao] = useState("");
   const [quantidade, setQuantidade] = useState("");
   const [valor, setValor] = useState("");
-
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
-    if (isOpen && editMode && itemId) {
+    async function carregarItem() {
+      if (!itemId) return;
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/auth/itens/${itemId}`);
+        if (!res.ok) {
+          alert("Erro ao carregar item");
+          return;
+        }
+
+        const data = await res.json();
+
+        setDescricao(data.descricao || "");
+        setQuantidade(String(data.quantidade || ""));
+
+        const valorFormatado = Number(data.valor)
+          .toFixed(2)
+          .replace(".", ",")
+          .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+        setValor(valorFormatado);
+      } catch {
+        alert("Erro ao carregar item.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (isOpen) {
+      if (mode === "edit") carregarItem();
+    }
+  }, [isOpen, mode, itemId]);
+
+  useEffect(() => {
+    if (!isOpen) {
       setDescricao("");
       setQuantidade("");
       setValor("");
-      setLoading(true);
-
-      fetch(`/api/auth/itens/${itemId}`)
-        .then(async (res) => {
-          if (!res.ok) throw new Error("Falha no GET");
-          const data = await res.json();
-          setDescricao(data.descricao || "");
-          setQuantidade(String(data.quantidade || ""));
-          setValor(String(data.valor || ""));
-        })
-        .catch(() => {
-          alert("Erro ao carregar informações do item.");
-          onClose();
-        })
-        .finally(() => setLoading(false));
+      setErrors({});
+      setLoading(false);
+      setSalvando(false);
     }
+  }, [isOpen]);
 
-    if (!isOpen) setErrors({});
-  }, [isOpen, itemId, editMode, onClose]);
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setErrors({});
 
-    const formData = new FormData(e.currentTarget);
-    const descricaoF = formData.get("descricao");
-    const quantidadeF = formData.get("quantidade");
-    const valorF = formData.get("valor");
+    const valorNumerico = Number(
+      valor.replace(/[^\d,-]/g, "").replace(",", ".")
+    );
 
-    const data = {
-      descricao: descricaoF,
-      quantidade: quantidadeF,
-      valor: valorF,
+    const dataForm = {
+      descricao,
+      quantidade: Number(quantidade),
+      valor: valorNumerico,
     };
 
-    const validation = editMode
-      ? ItemEditSchema.safeParse(data)
-      : ItemSchema.safeParse(data);
+    const validation =
+      mode === "edit"
+        ? ItemEditSchema.safeParse(dataForm)
+        : ItemSchema.safeParse(dataForm);
 
     if (!validation.success) {
-      const fieldErrors: FormErrors = {};
-      for (const issue of validation.error.issues) {
-        const key = issue.path[0] as string;
-        fieldErrors[key as keyof FormErrors] = issue.message;
-      }
-      setErrors(fieldErrors);
+      const errs: FormErrors = {};
+      validation.error.issues.forEach((issue) => {
+        errs[issue.path[0] as keyof FormErrors] = issue.message;
+      });
+      setErrors(errs);
       return;
     }
 
     setSalvando(true);
 
     try {
-      const url = editMode ? `/api/auth/itens/${itemId}` : "/api/auth/itens";
-      const method = editMode ? "PUT" : "POST";
+      const url =
+        mode === "create" ? "/api/auth/itens" : `/api/auth/itens/${itemId}`;
+
+      const method = mode === "create" ? "POST" : "PUT";
 
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          descricao: descricaoF,
-          quantidade: quantidadeF,
-          valor: valorF,
+          descricao,
+          quantidade: Number(quantidade),
+          valor: valorNumerico,
         }),
       });
 
-      if (res.ok) {
-        onSaved();
-        onClose();
-      } else {
+      if (!res.ok) {
         const errorData = await res.json();
-        alert(`Erro: ${errorData.error || res.statusText}`);
+        alert(errorData.error || "Erro ao salvar item");
+        return;
       }
+
+      onSaved();
+      onClose();
     } catch {
-      alert("Erro de conexão.");
+      alert("Erro ao salvar item.");
     } finally {
       setSalvando(false);
     }
-  };
+  }
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 backdrop-blur-sm">
-      <div className="bg-[#161B22] p-6 rounded-2xl w-full max-w-md shadow-2xl text-white relative">
+      <div className="bg-[#161B22] p-6 rounded-2xl w-full max-w-md shadow-2xl text-white">
+        <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
+          <h2 className="text-xl font-semibold text-[#E0E0E0]">
+            {mode === "create" ? "Novo Item" : "Editar Item"}
+          </h2>
+
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-2xl"
+          >
+            &times;
+          </button>
+        </div>
+
         {loading ? (
-          <p className="text-center text-[#E0E0E0] py-8">
-            Carregando dados do item...
-          </p>
+          <p className="text-center py-6 text-[#E0E0E0]">Carregando dados...</p>
         ) : (
-          <>
-            <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
-              <h2 className="text-xl font-semibold text-[#E0E0E0]">
-                {editMode ? "Editar Item" : "Novo Item"}
-              </h2>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-white text-2xl"
-                aria-label="Fechar Modal"
-              >
-                &times;
-              </button>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label className="block mb-1 text-sm text-[#E0E0E0]">
+                Descrição
+              </label>
+              <input
+                value={descricao}
+                onChange={(e) => setDescricao(e.target.value)}
+                className={`w-full px-4 h-[44px] bg-[#0D1117] text-[#E0E0E0] rounded-xl outline-none border transition ${
+                  errors.descricao
+                    ? "border-[#FF5252] ring-1 ring-[#FF5252]/40"
+                    : "border-gray-700 hover:border-[#2196F3]/50 focus:border-[#2196F3]"
+                }`}
+              />
+              {errors.descricao && (
+                <p className="text-[#FF5252] text-xs mt-1">
+                  {errors.descricao}
+                </p>
+              )}
             </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label
-                  className="block text-sm font-medium mb-1"
-                  htmlFor="descricao"
-                >
-                  Descrição
-                </label>
-                <input
-                  id="descricao"
-                  name="descricao"
-                  type="text"
-                  value={descricao}
-                  onChange={(e) => setDescricao(e.target.value)}
-                  className={`w-full px-4 py-2 bg-[#0D1117] text-[#E0E0E0] outline-none rounded-xl 
-                    ${
-                      errors.descricao
-                        ? "border-2 border-[#FF5252]"
-                        : "focus:ring-2 focus:ring-[#2196F3]"
-                    }`}
-                />
-                {errors.descricao && (
-                  <p className="text-[#FF5252] text-xs mt-1">
-                    {errors.descricao}
-                  </p>
-                )}
-              </div>
+            <div className="mb-4">
+              <label className="block mb-1 text-sm text-[#E0E0E0]">
+                Quantidade
+              </label>
+              <input
+                value={quantidade}
+                type="number"
+                onChange={(e) => setQuantidade(e.target.value)}
+                className={`w-full px-4 h-[44px] bg-[#0D1117] text-[#E0E0E0] rounded-xl outline-none border transition ${
+                  errors.quantidade
+                    ? "border-[#FF5252] ring-1 ring-[#FF5252]/40"
+                    : "border-gray-700 hover:border-[#2196F3]/50 focus:border-[#2196F3]"
+                }`}
+              />
+              {errors.quantidade && (
+                <p className="text-[#FF5252] text-xs mt-1">
+                  {errors.quantidade}
+                </p>
+              )}
+            </div>
 
-              <div className="mb-4">
-                <label
-                  className="block text-sm font-medium mb-1"
-                  htmlFor="quantidade"
-                >
-                  Quantidade
-                </label>
-                <input
-                  id="quantidade"
-                  name="quantidade"
-                  type="text"
-                  value={quantidade}
-                  onChange={(e) => setQuantidade(e.target.value)}
-                  className={`w-full px-4 py-2 bg-[#0D1117] text-[#E0E0E0] outline-none rounded-xl 
-                    ${
-                      errors.quantidade
-                        ? "border-2 border-[#FF5252]"
-                        : "focus:ring-2 focus:ring-[#2196F3]"
-                    }`}
-                />
-                {errors.quantidade && (
-                  <p className="text-[#FF5252] text-xs mt-1">
-                    {errors.quantidade}
-                  </p>
-                )}
-              </div>
+            <div className="mb-4">
+              <label className="block mb-1 text-sm text-[#E0E0E0]">
+                Valor (R$)
+              </label>
 
-              <div className="mb-4">
-                <label
-                  className="block text-sm font-medium mb-1"
-                  htmlFor="valor"
-                >
-                  Valor
-                </label>
-                <input
-                  id="valor"
-                  name="valor"
-                  type="text"
-                  value={valor}
-                  onChange={(e) => setValor(e.target.value)}
-                  className={`w-full px-4 py-2 bg-[#0D1117] text-[#E0E0E0] outline-none rounded-xl 
-                    ${
-                      errors.valor
-                        ? "border-2 border-[#FF5252]"
-                        : "focus:ring-2 focus:ring-[#2196F3]"
-                    }`}
-                />
-                {errors.valor && (
-                  <p className="text-[#FF5252] text-xs mt-1">{errors.valor}</p>
-                )}
-              </div>
+              <NumericFormat
+                value={valor}
+                onValueChange={(v) => setValor(v.formattedValue)}
+                thousandSeparator="."
+                decimalSeparator=","
+                prefix="R$ "
+                decimalScale={2}
+                fixedDecimalScale
+                allowNegative={false}
+                className={`w-full px-4 h-[44px] bg-[#0D1117] text-[#E0E0E0] rounded-xl outline-none border transition ${
+                  errors.valor
+                    ? "border-[#FF5252] ring-1 ring-[#FF5252]/40"
+                    : "border-gray-700 hover:border-[#2196F3]/50 focus:border-[#2196F3]"
+                }`}
+              />
 
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="bg-gray-600 hover:bg-gray-700 text-[#161B22] font-bold py-2 px-4 rounded-xl disabled:opacity-50"
-                  disabled={salvando}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={salvando}
-                  className={`${
-                    salvando
-                      ? "bg-[#2196F3]/50 cursor-not-allowed"
-                      : "bg-[#2196F3] hover:bg-[#2196F3]/75"
-                  } text-[#161B22] font-bold py-2 px-4 rounded-xl transition`}
-                >
-                  {salvando ? "Salvando..." : "Salvar"}
-                </button>
-              </div>
-            </form>
-          </>
+              {errors.valor && (
+                <p className="text-[#FF5252] text-xs mt-1">{errors.valor}</p>
+              )}
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="bg-gray-600 hover:bg-gray-700 text-[#161B22] font-bold px-4 h-[44px] rounded-xl"
+                disabled={salvando}
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="submit"
+                disabled={salvando}
+                className={`${
+                  salvando
+                    ? "bg-[#2196F3]/50 cursor-not-allowed"
+                    : "bg-[#2196F3] hover:bg-[#2196F3]/75"
+                } text-[#161B22] font-bold py-2 px-4 rounded-xl transition`}
+              >
+                {salvando
+                  ? "Salvando..."
+                  : mode === "create"
+                    ? "Salvar"
+                    : "Atualizar"}
+              </button>
+            </div>
+          </form>
         )}
       </div>
     </div>

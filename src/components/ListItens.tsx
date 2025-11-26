@@ -92,6 +92,11 @@ export default function ListItens() {
           </thead>
           <tbody>
             {itens.map((u) => {
+              const quantidadeFormatada = String(u.quantidade);
+              const valorFormatado = Number(u.valor)
+                .toFixed(2)
+                .replace(".", ",");
+
               return (
                 <tr
                   key={u.id}
@@ -99,8 +104,9 @@ export default function ListItens() {
                 >
                   <td className="px-3 py-2">{u.id}</td>
                   <td className="px-3 py-2">{u.descricao}</td>
-                  <td className="px-3 py-2">{u.quantidade}</td>
-                  <td className="px-3 py-2">{u.valor}</td>
+                  <td className="px-3 py-2">{quantidadeFormatada}</td>
+                  <td className="px-3 py-2">R$ {valorFormatado}</td>
+
                   <td className="px-3 py-2 text-center">
                     <button
                       onClick={() => editarItem(u.id)}
@@ -109,6 +115,7 @@ export default function ListItens() {
                     >
                       <Edit size={18} />
                     </button>
+
                     <button
                       onClick={() => deletarItem(u.id)}
                       className="bg-[#FF5252] hover:bg-[#FF5252]/75 text-[#0D1117] p-2 rounded-xl transition"
@@ -134,6 +141,8 @@ export default function ListItens() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSaved={carregarItens}
+        mode="create"
+        itemId={null}
       />
 
       <ModalItens
@@ -143,6 +152,7 @@ export default function ListItens() {
           setItemSelecionado(null);
         }}
         onSaved={carregarItens}
+        mode="edit"
         itemId={itemSelecionado}
       />
     </>
