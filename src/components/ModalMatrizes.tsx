@@ -23,8 +23,12 @@ export default function ModalMatrizes({
   const [numeroInicial, setNumeroInicial] = useState("");
   const [numeroFinal, setNumeroFinal] = useState("");
 
+  const [imagemFile, setImagemFile] = useState<File | null>(null);
+  const [imagemUrl, setImagemUrl] = useState<string>("");
+
   const [loading, setLoading] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     async function carregarMatriz() {
@@ -40,6 +44,7 @@ export default function ModalMatrizes({
         setTipo(data.tipo_matriz || "");
         setNumeroInicial(data.numero_inicial || "");
         setNumeroFinal(data.numero_final || "");
+        setImagemUrl(data.imagem_url || "");
       } catch {
         alert("Erro ao carregar matriz.");
       } finally {
@@ -57,8 +62,11 @@ export default function ModalMatrizes({
       setTipo("");
       setNumeroInicial("");
       setNumeroFinal("");
+      setImagemFile(null);
+      setImagemUrl("");
       setLoading(false);
       setSalvando(false);
+      setUploading(false);
     }
   }, [isOpen]);
 
@@ -66,19 +74,47 @@ export default function ModalMatrizes({
     e.preventDefault();
     setSalvando(true);
 
+    let uploadedImageUrl = imagemUrl;
+
+    if (imagemFile) {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append("file", imagemFile);
+
+      try {
+        const uploadRes = await fetch("/api/upload-cloudinary", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!uploadRes.ok) throw new Error("Erro ao fazer upload da imagem");
+
+        const data = await uploadRes.json();
+        uploadedImageUrl = data.url;
+        setImagemUrl(uploadedImageUrl);
+      } catch {
+        alert("Erro ao enviar imagem");
+        setUploading(false);
+        setSalvando(false);
+        return;
+      } finally {
+        setUploading(false);
+      }
+    }
+
     const body = {
       codigo,
       descricao,
       tipo_matriz: tipo,
       numero_inicial: numeroInicial ? Number(numeroInicial) : null,
       numero_final: numeroFinal ? Number(numeroFinal) : null,
+      imagem_url: uploadedImageUrl,
     };
 
     const url =
       mode === "create"
         ? "/api/auth/matrizes"
         : `/api/auth/matrizes/${matrizId}`;
-
     const method = mode === "create" ? "POST" : "PUT";
 
     try {
@@ -111,7 +147,6 @@ export default function ModalMatrizes({
           <h2 className="text-xl font-semibold text-[#E0E0E0]">
             {mode === "create" ? "Nova Matriz" : "Editar Matriz"}
           </h2>
-
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white text-2xl"
@@ -176,6 +211,25 @@ export default function ModalMatrizes({
               </div>
             </div>
 
+            <div className="mb-4">
+              <label className="block mb-1 text-sm">Imagem</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) setImagemFile(e.target.files[0]);
+                }}
+                className="w-full text-sm text-gray-200"
+              />
+              {imagemUrl && (
+                <img
+                  src={imagemUrl}
+                  alt="Preview"
+                  className="mt-2 h-24 object-contain rounded"
+                />
+              )}
+            </div>
+
             <div className="flex justify-end space-x-3 pt-2">
               <button
                 type="button"
@@ -188,18 +242,20 @@ export default function ModalMatrizes({
 
               <button
                 type="submit"
-                disabled={salvando}
+                disabled={salvando || uploading}
                 className={`${
-                  salvando
+                  salvando || uploading
                     ? "bg-[#2196F3]/50 cursor-not-allowed"
                     : "bg-[#2196F3] hover:bg-[#2196F3]/75"
                 } text-[#161B22] font-bold py-2 px-4 rounded-xl transition`}
               >
                 {salvando
                   ? "Salvando..."
-                  : mode === "create"
-                    ? "Salvar"
-                    : "Atualizar"}
+                  : uploading
+                    ? "Enviando imagem..."
+                    : mode === "create"
+                      ? "Salvar"
+                      : "Atualizar"}
               </button>
             </div>
           </form>

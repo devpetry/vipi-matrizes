@@ -33,7 +33,6 @@ export default async function Home() {
         <SidebarToggle />
       </div>
 
-      {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         {matrizes.map((m: Matriz) => (
           <a
@@ -41,18 +40,16 @@ export default async function Home() {
             href={`/matrizes/${m.id}`}
             className="group bg-white p-5 rounded-xl shadow-md border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
           >
-            {/* Imagem */}
             <div className="w-full h-40 rounded-lg overflow-hidden bg-gray-200 flex items-center justify-center">
               <Image
                 src={m.imagem_url || "/images/default.png"}
                 alt={`Imagem da ${m.descricao}`}
-                width={200}
-                height={200}
-                className="object-cover w-full h-full"
+                width={400}
+                height={300}
+                className="object-cover w-full h-full rounded-lg"
               />
             </div>
 
-            {/* Infos */}
             <div className="mt-4 flex-1">
               <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition">
                 {m.descricao}
@@ -63,7 +60,6 @@ export default async function Home() {
               </p>
             </div>
 
-            {/* Ver detalhes */}
             <span className="mt-4 text-blue-600 font-medium group-hover:underline">
               Ver detalhes →
             </span>
